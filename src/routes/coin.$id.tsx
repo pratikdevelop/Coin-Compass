@@ -148,7 +148,7 @@ function CoinDetailPage() {
             </div>
             {data.description ? (
               <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                {data.description}.
+                {data.description}
               </p>
             ) : null}
           </div>
