@@ -43,6 +43,16 @@ export type NewsItem = {
 
 const CG = "https://api.coingecko.com/api/v3";
 
+/** simple in-memory TTL cache so repeated visits don't re-hit the upstream API */
+const cache = new Map<string, { at: number; value: unknown }>();
+async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.value as T;
+  const value = await load();
+  cache.set(key, { at: Date.now(), value });
+  return value;
+}
+
 async function cg<T>(path: string): Promise<T> {
   const res = await fetch(`${CG}${path}`, {
     headers: { accept: "application/json" },
@@ -126,6 +136,7 @@ function mockDetail(id: string): CoinDetail | null {
 /* ---------------- public service API ---------------- */
 
 export async function getCoins(): Promise<Coin[]> {
+  return cached("coins", 45_000, async () => {
   try {
     const data = await cg<any[]>(
       "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false",
@@ -144,11 +155,13 @@ export async function getCoins(): Promise<Coin[]> {
   } catch {
     return mockCoins();
   }
+  });
 }
 
 const RANGE_DAYS: Record<string, string> = { "1D": "1", "7D": "7", "1M": "30", "1Y": "365" };
 
 export async function getCoin(id: string, range = "7D"): Promise<CoinDetail | null> {
+  return cached(`coin:${id}:${range}`, 45_000, async () => {
   const days = RANGE_DAYS[range] ?? "7";
   try {
     const [info, chart] = await Promise.all([
@@ -187,9 +200,11 @@ export async function getCoin(id: string, range = "7D"): Promise<CoinDetail | nu
     const slice = { "1D": 24, "7D": 168, "1M": 168, "1Y": 168 }[range] ?? 168;
     return { ...m, historicalPrices: m.historicalPrices.slice(-slice) };
   }
+  });
 }
 
 export async function getNews(): Promise<NewsItem[]> {
+  return cached("news", 300_000, async () => {
   try {
     const res = await fetch("https://min-api.cryptocompare.com/data/v2/news/?lang=EN", {
       signal: AbortSignal.timeout(8000),
@@ -219,4 +234,5 @@ export async function getNews(): Promise<NewsItem[]> {
       date: new Date(now - i * 3600_000 * 3).toISOString(),
     }));
   }
+  });
 }
