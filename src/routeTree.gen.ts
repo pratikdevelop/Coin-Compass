@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NewsRouteImport } from './routes/news'
+import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as ApiCoinsRouteImport } from './routes/api/coins'
 import { Route as ApiNewsRouteImport } from './routes/api/news'
@@ -25,6 +26,11 @@ const IndexRoute = IndexRouteImport.update({
 const NewsRoute = NewsRouteImport.update({
   id: '/news',
   path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioRoute = PortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WatchlistRoute = WatchlistRouteImport.update({
@@ -56,6 +62,7 @@ const ApiCoinIdRoute = ApiCoinIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/news': typeof NewsRoute
+  '/portfolio': typeof PortfolioRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/news': typeof NewsRoute
+  '/portfolio': typeof PortfolioRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/news': typeof NewsRoute
+  '/portfolio': typeof PortfolioRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/news'
+    | '/portfolio'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/news'
+    | '/portfolio'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/news'
+    | '/portfolio'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
@@ -114,6 +126,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   NewsRoute: typeof NewsRoute
+  PortfolioRoute: typeof PortfolioRoute
   WatchlistRoute: typeof WatchlistRoute
   ApiCoinsRoute: typeof ApiCoinsRoute
   ApiNewsRoute: typeof ApiNewsRoute
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/news'
       fullPath: '/news'
       preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio': {
+      id: '/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof PortfolioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/watchlist': {
@@ -178,6 +198,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NewsRoute: NewsRoute,
+  PortfolioRoute: PortfolioRoute,
   WatchlistRoute: WatchlistRoute,
   ApiCoinsRoute: ApiCoinsRoute,
   ApiNewsRoute: ApiNewsRoute,

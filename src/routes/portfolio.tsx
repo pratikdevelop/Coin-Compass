@@ -80,9 +80,18 @@ function PortfolioPage() {
     const coin = coins?.find((c) => c.id === coinId);
     const qty = Number(quantity);
     const cost = Number(buyPrice);
-    if (!coin) return toast.error("Pick a coin first");
-    if (!Number.isFinite(qty) || qty <= 0) return toast.error("Enter a quantity above zero");
-    if (!Number.isFinite(cost) || cost <= 0) return toast.error("Enter a valid buy price");
+    if (!coin) {
+      toast.error("Pick a coin first");
+      return;
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      toast.error("Enter a quantity above zero");
+      return;
+    }
+    if (!Number.isFinite(cost) || cost <= 0) {
+      toast.error("Enter a valid buy price");
+      return;
+    }
     add({ coinId: coin.id, symbol: coin.symbol, name: coin.name, quantity: qty, buyPrice: cost });
     setQuantity("");
     setBuyPrice("");
