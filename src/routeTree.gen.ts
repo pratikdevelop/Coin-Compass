@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NewsRouteImport } from './routes/news'
+import { Route as WatchlistRouteImport } from './routes/watchlist'
+import { Route as ApiCoinsRouteImport } from './routes/api/coins'
+import { Route as ApiNewsRouteImport } from './routes/api/news'
+import { Route as CoinIdRouteImport } from './routes/coin.$id'
+import { Route as ApiCoinIdRouteImport } from './routes/api/coin.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchlistRoute = WatchlistRouteImport.update({
+  id: '/watchlist',
+  path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCoinsRoute = ApiCoinsRouteImport.update({
+  id: '/api/coins',
+  path: '/api/coins',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNewsRoute = ApiNewsRouteImport.update({
+  id: '/api/news',
+  path: '/api/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoinIdRoute = CoinIdRouteImport.update({
+  id: '/coin/$id',
+  path: '/coin/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCoinIdRoute = ApiCoinIdRouteImport.update({
+  id: '/api/coin/$id',
+  path: '/api/coin/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/news': typeof NewsRoute
+  '/watchlist': typeof WatchlistRoute
+  '/api/coins': typeof ApiCoinsRoute
+  '/api/news': typeof ApiNewsRoute
+  '/coin/$id': typeof CoinIdRoute
+  '/api/coin/$id': typeof ApiCoinIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/news': typeof NewsRoute
+  '/watchlist': typeof WatchlistRoute
+  '/api/coins': typeof ApiCoinsRoute
+  '/api/news': typeof ApiNewsRoute
+  '/coin/$id': typeof CoinIdRoute
+  '/api/coin/$id': typeof ApiCoinIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/news': typeof NewsRoute
+  '/watchlist': typeof WatchlistRoute
+  '/api/coins': typeof ApiCoinsRoute
+  '/api/news': typeof ApiNewsRoute
+  '/coin/$id': typeof CoinIdRoute
+  '/api/coin/$id': typeof ApiCoinIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/news'
+    | '/watchlist'
+    | '/api/coins'
+    | '/api/news'
+    | '/coin/$id'
+    | '/api/coin/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/news'
+    | '/watchlist'
+    | '/api/coins'
+    | '/api/news'
+    | '/coin/$id'
+    | '/api/coin/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/news'
+    | '/watchlist'
+    | '/api/coins'
+    | '/api/news'
+    | '/coin/$id'
+    | '/api/coin/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NewsRoute: typeof NewsRoute
+  WatchlistRoute: typeof WatchlistRoute
+  ApiCoinsRoute: typeof ApiCoinsRoute
+  ApiNewsRoute: typeof ApiNewsRoute
+  CoinIdRoute: typeof CoinIdRoute
+  ApiCoinIdRoute: typeof ApiCoinIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watchlist': {
+      id: '/watchlist'
+      path: '/watchlist'
+      fullPath: '/watchlist'
+      preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/coins': {
+      id: '/api/coins'
+      path: '/api/coins'
+      fullPath: '/api/coins'
+      preLoaderRoute: typeof ApiCoinsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/news': {
+      id: '/api/news'
+      path: '/api/news'
+      fullPath: '/api/news'
+      preLoaderRoute: typeof ApiNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coin/$id': {
+      id: '/coin/$id'
+      path: '/coin/$id'
+      fullPath: '/coin/$id'
+      preLoaderRoute: typeof CoinIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/coin/$id': {
+      id: '/api/coin/$id'
+      path: '/api/coin/$id'
+      fullPath: '/api/coin/$id'
+      preLoaderRoute: typeof ApiCoinIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NewsRoute: NewsRoute,
+  WatchlistRoute: WatchlistRoute,
+  ApiCoinsRoute: ApiCoinsRoute,
+  ApiNewsRoute: ApiNewsRoute,
+  CoinIdRoute: CoinIdRoute,
+  ApiCoinIdRoute: ApiCoinIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
