@@ -40,7 +40,18 @@ function useOwnedQuery<T>(table: string, orderBy: string, ascending = false) {
     queryKey: [table, userId],
     enabled: ready && !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (
+        supabase as unknown as {
+          from: (t: string) => {
+            select: (c: string) => {
+              order: (
+                col: string,
+                opts: { ascending: boolean },
+              ) => Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+            };
+          };
+        }
+      )
         .from(table)
         .select("*")
         .order(orderBy, { ascending });

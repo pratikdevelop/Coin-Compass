@@ -14,6 +14,14 @@ export const coinsQuery = queryOptions({
   staleTime: 30_000,
 });
 
+/** Fast-refreshing feed for the home page live ticker. */
+export const tickerQuery = queryOptions({
+  queryKey: ["ticker"],
+  queryFn: () => getJson<Coin[]>("/api/coins"),
+  refetchInterval: 5_000,
+  staleTime: 0,
+});
+
 export const coinQuery = (id: string, range: string) =>
   queryOptions({
     queryKey: ["coin", id, range],
