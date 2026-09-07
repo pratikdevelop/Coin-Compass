@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      holdings: {
+        Row: {
+          buy_price: number
+          coin_id: string
+          created_at: string
+          id: string
+          name: string
+          quantity: number
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          buy_price: number
+          coin_id: string
+          created_at?: string
+          id?: string
+          name: string
+          quantity: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          buy_price?: number
+          coin_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          quantity?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      price_alerts: {
+        Row: {
+          active: boolean
+          coin_id: string
+          created_at: string
+          direction: string
+          email_sent_at: string | null
+          id: string
+          name: string
+          symbol: string
+          target_price: number
+          triggered_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          coin_id: string
+          created_at?: string
+          direction: string
+          email_sent_at?: string | null
+          id?: string
+          name?: string
+          symbol: string
+          target_price: number
+          triggered_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          coin_id?: string
+          created_at?: string
+          direction?: string
+          email_sent_at?: string | null
+          id?: string
+          name?: string
+          symbol?: string
+          target_price?: number
+          triggered_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          coin_id: string
+          created_at: string
+          id: string
+          name: string
+          note: string | null
+          price: number
+          quantity: number
+          side: string
+          symbol: string
+          traded_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coin_id: string
+          created_at?: string
+          id?: string
+          name: string
+          note?: string | null
+          price: number
+          quantity: number
+          side: string
+          symbol: string
+          traded_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coin_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          note?: string | null
+          price?: number
+          quantity?: number
+          side?: string
+          symbol?: string
+          traded_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          coin_id: string
+          created_at: string
+          id: string
+          name: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          coin_id: string
+          created_at?: string
+          id?: string
+          name: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          coin_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
