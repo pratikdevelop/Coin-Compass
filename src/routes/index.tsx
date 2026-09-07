@@ -3,7 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { coinsQuery } from "@/lib/api";
-import { useWatchlist } from "@/lib/local-store";
+import { toast } from "sonner";
+import { useWatchlist } from "@/lib/db";
+import { useAuth } from "@/lib/auth";
+import { LiveTicker } from "@/components/coins/LiveTicker";
 import { CoinTable } from "@/components/coins/CoinTable";
 import { PageShell } from "@/components/layout/PageShell";
 import { formatCompact } from "@/lib/format";
@@ -29,7 +32,25 @@ export const Route = createFileRoute("/")({
 
 function MarketsPage() {
   const { data, isLoading, isError, dataUpdatedAt } = useQuery(coinsQuery);
-  const { watchlist, toggle } = useWatchlist();
+  const { ids: watchlist, toggle } = useWatchlist();
+  const { userId } = useAuth();
+
+  const onToggleWatch = (id: string) => {
+    const coin = (data ?? []).find((c) => c.id === id);
+    if (!coin) return;
+    if (!userId) {
+      toast.error("Sign in to save your watchlist");
+      return;
+    }
+    toggle.mutate(
+      { id: coin.id, symbol: coin.symbol, name: coin.name },
+      {
+        onSuccess: (r) =>
+          toast.success(r === "added" ? `${coin.name} added to watchlist` : `${coin.name} removed`),
+        onError: (e: Error) => toast.error(e.message),
+      },
+    );
+  };
   const [term, setTerm] = useState("");
 
   const coins = useMemo(() => {
@@ -48,6 +69,8 @@ function MarketsPage() {
 
   return (
     <PageShell>
+      <LiveTicker />
+
       <section className="glow-surface -mx-4 mb-8 px-4 pb-8 pt-10 sm:-mx-6 sm:px-6">
         <h1 className="text-3xl font-semibold sm:text-4xl">Today's crypto markets</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -92,7 +115,7 @@ function MarketsPage() {
         <CoinTable
           coins={coins}
           watchlist={watchlist}
-          onToggleWatch={toggle}
+          onToggleWatch={onToggleWatch}
           emptyMessage="No coins match your search."
         />
       )}
