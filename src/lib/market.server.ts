@@ -136,7 +136,7 @@ function mockDetail(id: string): CoinDetail | null {
 /* ---------------- public service API ---------------- */
 
 export async function getCoins(): Promise<Coin[]> {
-  return cached("coins", 45_000, async () => {
+  return cached("coins", 20_000, async () => {
   try {
     const data = await cg<any[]>(
       "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false",
@@ -235,4 +235,30 @@ export async function getNews(): Promise<NewsItem[]> {
     }));
   }
   });
+}
+
+/** Current USD price for a set of coin ids (used by the alert checker). */
+export async function getPrices(ids: string[]): Promise<Record<string, number>> {
+  if (!ids.length) return {};
+  const result: Record<string, number> = {};
+  try {
+    const data = await cg<Record<string, { usd?: number }>>(
+      `/simple/price?ids=${encodeURIComponent(ids.join(","))}&vs_currencies=usd`,
+    );
+    for (const id of ids) {
+      const price = data?.[id]?.usd;
+      if (typeof price === "number" && price > 0) result[id] = price;
+    }
+  } catch {
+    /* fall through to the market list below */
+  }
+  const missing = ids.filter((id) => !result[id]);
+  if (missing.length) {
+    const coins = await getCoins();
+    for (const id of missing) {
+      const hit = coins.find((c) => c.id === id);
+      if (hit && hit.price > 0) result[id] = hit.price;
+    }
+  }
+  return result;
 }
