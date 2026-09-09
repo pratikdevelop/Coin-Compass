@@ -134,3 +134,20 @@
 @utility glow-surface {
   background-image: var(--gradient-glow);
 }
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.ticker-track {
+  animation: ticker-scroll 38s linear infinite;
+}
+
+.ticker-viewport:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+}

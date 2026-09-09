@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X, LineChart } from "lucide-react";
+import { Menu, X, LineChart, LogIn, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { CoinSearch } from "@/components/coins/CoinSearch";
 
@@ -8,11 +9,13 @@ const links = [
   { to: "/", label: "Markets" },
   { to: "/watchlist", label: "Watchlist" },
   { to: "/portfolio", label: "Portfolio" },
+  { to: "/trades", label: "Trades" },
   { to: "/news", label: "News" },
 ] as const;
 
 export function NavBar() {
   const [open, setOpen] = useState(false);
+  const { userId, ready, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur">
@@ -42,6 +45,24 @@ export function NavBar() {
           <div className="hidden sm:block">
             <CoinSearch />
           </div>
+          {ready ? (
+            userId ? (
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="hidden h-9 items-center gap-2 rounded-md border border-border px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex"
+              >
+                <LogOut className="size-4" /> Sign out
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                className="hidden h-9 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:opacity-90 sm:inline-flex"
+              >
+                <LogIn className="size-4" /> Sign in
+              </Link>
+            )
+          ) : null}
           <button
             type="button"
             aria-label="Toggle navigation"
@@ -70,6 +91,28 @@ export function NavBar() {
               {l.label}
             </Link>
           ))}
+          {ready ? (
+            userId ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  void signOut();
+                }}
+                className="rounded-md px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link
+                to="/auth"
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2 text-sm text-primary hover:bg-accent"
+              >
+                Sign in
+              </Link>
+            )
+          ) : null}
         </nav>
       </div>
     </header>

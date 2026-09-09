@@ -13,11 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as TradesRouteImport } from './routes/trades'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as ApiCoinsRouteImport } from './routes/api/coins'
 import { Route as ApiNewsRouteImport } from './routes/api/news'
 import { Route as CoinIdRouteImport } from './routes/coin.$id'
 import { Route as ApiCoinIdRouteImport } from './routes/api/coin.$id'
+import { Route as ApiPublicHooksCheckAlertsRouteImport } from './routes/api/public/hooks/check-alerts'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -37,6 +39,11 @@ const NewsRoute = NewsRouteImport.update({
 const PortfolioRoute = PortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TradesRoute = TradesRouteImport.update({
+  id: '/trades',
+  path: '/trades',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WatchlistRoute = WatchlistRouteImport.update({
@@ -64,28 +71,38 @@ const ApiCoinIdRoute = ApiCoinIdRouteImport.update({
   path: '/api/coin/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksCheckAlertsRoute =
+  ApiPublicHooksCheckAlertsRouteImport.update({
+    id: '/api/public/hooks/check-alerts',
+    path: '/api/public/hooks/check-alerts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
+  '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
   '/coin/$id': typeof CoinIdRoute
   '/api/coin/$id': typeof ApiCoinIdRoute
+  '/api/public/hooks/check-alerts': typeof ApiPublicHooksCheckAlertsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
+  '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
   '/coin/$id': typeof CoinIdRoute
   '/api/coin/$id': typeof ApiCoinIdRoute
+  '/api/public/hooks/check-alerts': typeof ApiPublicHooksCheckAlertsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,11 +110,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
+  '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
   '/coin/$id': typeof CoinIdRoute
   '/api/coin/$id': typeof ApiCoinIdRoute
+  '/api/public/hooks/check-alerts': typeof ApiPublicHooksCheckAlertsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,33 +125,39 @@ export interface FileRouteTypes {
     | '/auth'
     | '/news'
     | '/portfolio'
+    | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
     | '/coin/$id'
     | '/api/coin/$id'
+    | '/api/public/hooks/check-alerts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/news'
     | '/portfolio'
+    | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
     | '/coin/$id'
     | '/api/coin/$id'
+    | '/api/public/hooks/check-alerts'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/news'
     | '/portfolio'
+    | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
     | '/coin/$id'
     | '/api/coin/$id'
+    | '/api/public/hooks/check-alerts'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -140,11 +165,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   NewsRoute: typeof NewsRoute
   PortfolioRoute: typeof PortfolioRoute
+  TradesRoute: typeof TradesRoute
   WatchlistRoute: typeof WatchlistRoute
   ApiCoinsRoute: typeof ApiCoinsRoute
   ApiNewsRoute: typeof ApiNewsRoute
   CoinIdRoute: typeof CoinIdRoute
   ApiCoinIdRoute: typeof ApiCoinIdRoute
+  ApiPublicHooksCheckAlertsRoute: typeof ApiPublicHooksCheckAlertsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -175,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/portfolio'
       fullPath: '/portfolio'
       preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trades': {
+      id: '/trades'
+      path: '/trades'
+      fullPath: '/trades'
+      preLoaderRoute: typeof TradesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/watchlist': {
@@ -212,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCoinIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/check-alerts': {
+      id: '/api/public/hooks/check-alerts'
+      path: '/api/public/hooks/check-alerts'
+      fullPath: '/api/public/hooks/check-alerts'
+      preLoaderRoute: typeof ApiPublicHooksCheckAlertsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -220,11 +261,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   NewsRoute: NewsRoute,
   PortfolioRoute: PortfolioRoute,
+  TradesRoute: TradesRoute,
   WatchlistRoute: WatchlistRoute,
   ApiCoinsRoute: ApiCoinsRoute,
   ApiNewsRoute: ApiNewsRoute,
   CoinIdRoute: CoinIdRoute,
   ApiCoinIdRoute: ApiCoinIdRoute,
+  ApiPublicHooksCheckAlertsRoute: ApiPublicHooksCheckAlertsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

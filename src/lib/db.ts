@@ -196,7 +196,7 @@ export function useTrades() {
       quantity: number;
       price: number;
       tradedAt: string;
-      note?: string;
+      note?: string | undefined;
     }) => {
       if (!userId) throw new Error("Sign in to record trades");
       const { error } = await supabase.from("trades").insert({

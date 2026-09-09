@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { coinQuery } from "@/lib/api";
 import { PageShell } from "@/components/layout/PageShell";
 import { PriceChart, RANGES, type Range } from "@/components/coins/PriceChart";
-import { useAlerts, useWatchlist } from "@/lib/local-store";
+import { useAlerts, useWatchlist } from "@/lib/db";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   formatCompact,
@@ -38,6 +39,7 @@ function CoinDetailPage() {
   const [range, setRange] = useState<Range>("7D");
   const { data, isLoading, isError } = useQuery(coinQuery(id, range));
   const { has, toggle } = useWatchlist();
+  const { userId } = useAuth();
   const watched = has(id);
 
   return (
@@ -84,8 +86,22 @@ function CoinDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  toggle(id);
-                  toast.success(watched ? `${data.name} removed from watchlist` : `${data.name} added to watchlist`);
+                  if (!userId) {
+                    toast.error("Sign in to save your watchlist");
+                    return;
+                  }
+                  toggle.mutate(
+                    { id, symbol: data.symbol, name: data.name },
+                    {
+                      onSuccess: (r) =>
+                        toast.success(
+                          r === "added"
+                            ? `${data.name} added to watchlist`
+                            : `${data.name} removed from watchlist`,
+                        ),
+                      onError: (e: Error) => toast.error(e.message),
+                    },
+                  );
                 }}
                 className={cn(
                   "inline-flex h-10 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors",
@@ -97,7 +113,7 @@ function CoinDetailPage() {
                 <Star className={cn("size-4", watched && "fill-current")} />
                 {watched ? "In watchlist" : "Add to watchlist"}
               </button>
-              <AlertDialogButton coinId={id} symbol={data.symbol} currentPrice={data.price} />
+              <AlertDialogButton coinId={id} symbol={data.symbol} name={data.name} currentPrice={data.price} />
             </div>
           </div>
 
@@ -195,25 +211,31 @@ function LinkChip({
 function AlertDialogButton({
   coinId,
   symbol,
+  name,
   currentPrice,
 }: {
   coinId: string;
   symbol: string;
+  name: string;
   currentPrice: number;
 }) {
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState<"above" | "below">("above");
   const [price, setPrice] = useState(String(Math.round(currentPrice * 1.1 * 100) / 100));
   const { add } = useAlerts();
+  const { userId } = useAuth();
 
   const save = useMutation({
     mutationFn: async () => {
+      if (!userId) throw new Error("Sign in to save price alerts");
       const value = Number(price);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Enter a valid price above zero");
-      add({ coinId, symbol, direction, price: value });
+      await add.mutateAsync({ coinId, symbol, name, direction, targetPrice: value });
     },
     onSuccess: () => {
-      toast.success(`Alert saved: ${symbol} ${direction} ${formatPrice(Number(price))}`);
+      toast.success(
+        `Alert saved: we'll email you when ${symbol} goes ${direction} ${formatPrice(Number(price))}`,
+      );
       setOpen(false);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -285,7 +307,7 @@ function AlertDialogButton({
 
 function AlertList({ coinId }: { coinId: string }) {
   const { alerts, remove } = useAlerts();
-  const mine = alerts.filter((a) => a.coinId === coinId);
+  const mine = alerts.filter((a) => a.coin_id === coinId);
   if (!mine.length) return null;
   return (
     <div className="mt-6 rounded-xl border border-border bg-card p-5">
@@ -299,11 +321,16 @@ function AlertList({ coinId }: { coinId: string }) {
             className="flex items-center justify-between rounded-md border border-border bg-surface px-3 py-2 text-sm"
           >
             <span className="numeric">
-              {a.symbol} {a.direction} {formatPrice(a.price)}
+              {a.symbol} {a.direction} {formatPrice(Number(a.target_price))}
+              {a.triggered_at ? (
+                <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs text-foreground">
+                  triggered {new Date(a.triggered_at).toLocaleDateString()}
+                </span>
+              ) : null}
             </span>
             <button
               type="button"
-              onClick={() => remove(a.id)}
+              onClick={() => remove.mutate(a.id)}
               className="text-xs text-muted-foreground hover:text-loss"
             >
               Remove
