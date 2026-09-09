@@ -57,9 +57,18 @@ function TradesPage() {
     const coin = coins?.find((c) => c.id === coinId);
     const qty = Number(quantity);
     const unit = Number(price);
-    if (!coin) return toast.error("Pick a coin first");
-    if (!Number.isFinite(qty) || qty <= 0) return toast.error("Enter a quantity above zero");
-    if (!Number.isFinite(unit) || unit <= 0) return toast.error("Enter a valid price");
+    if (!coin) {
+      toast.error("Pick a coin first");
+      return;
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      toast.error("Enter a quantity above zero");
+      return;
+    }
+    if (!Number.isFinite(unit) || unit <= 0) {
+      toast.error("Enter a valid price");
+      return;
+    }
     add.mutate(
       {
         coinId: coin.id,

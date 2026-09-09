@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as TradesRouteImport } from './routes/trades'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as ApiCoinsRouteImport } from './routes/api/coins'
 import { Route as ApiNewsRouteImport } from './routes/api/news'
@@ -37,6 +38,11 @@ const NewsRoute = NewsRouteImport.update({
 const PortfolioRoute = PortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TradesRoute = TradesRouteImport.update({
+  id: '/trades',
+  path: '/trades',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WatchlistRoute = WatchlistRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
+  '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
+  '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
+  '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/news'
     | '/portfolio'
+    | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/news'
     | '/portfolio'
+    | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/news'
     | '/portfolio'
+    | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   NewsRoute: typeof NewsRoute
   PortfolioRoute: typeof PortfolioRoute
+  TradesRoute: typeof TradesRoute
   WatchlistRoute: typeof WatchlistRoute
   ApiCoinsRoute: typeof ApiCoinsRoute
   ApiNewsRoute: typeof ApiNewsRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/portfolio'
       fullPath: '/portfolio'
       preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trades': {
+      id: '/trades'
+      path: '/trades'
+      fullPath: '/trades'
+      preLoaderRoute: typeof TradesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/watchlist': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   NewsRoute: NewsRoute,
   PortfolioRoute: PortfolioRoute,
+  TradesRoute: TradesRoute,
   WatchlistRoute: WatchlistRoute,
   ApiCoinsRoute: ApiCoinsRoute,
   ApiNewsRoute: ApiNewsRoute,
