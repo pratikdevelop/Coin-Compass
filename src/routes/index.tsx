@@ -9,6 +9,8 @@ import { useAuth } from "@/lib/auth";
 import { LiveTicker } from "@/components/coins/LiveTicker";
 import { CoinTable } from "@/components/coins/CoinTable";
 import { PageShell } from "@/components/layout/PageShell";
+import { AdsterraBanner468x60 } from "@/components/ads/AdsterraBanner468x60";
+import { AdsterraNativeBanner } from "@/components/ads/AdsterraNativeBanner";
 import { formatCompact } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
@@ -94,6 +96,8 @@ function MarketsPage() {
         </div>
       </section>
 
+      <AdsterraBanner468x60 />
+
       <div className="mb-4 relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -119,6 +123,8 @@ function MarketsPage() {
           emptyMessage="No coins match your search."
         />
       )}
+
+      <AdsterraNativeBanner />
     </PageShell>
   );
 }

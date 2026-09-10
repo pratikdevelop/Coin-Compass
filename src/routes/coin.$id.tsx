@@ -6,6 +6,8 @@ import { ArrowLeft, Bell, Github, Globe, Send, Star, Twitter } from "lucide-reac
 import { toast } from "sonner";
 import { coinQuery } from "@/lib/api";
 import { PageShell } from "@/components/layout/PageShell";
+import { AdsterraBanner468x60 } from "@/components/ads/AdsterraBanner468x60";
+import { AdsterraNativeBanner } from "@/components/ads/AdsterraNativeBanner";
 import { PriceChart, RANGES, type Range } from "@/components/coins/PriceChart";
 import { useAlerts, useWatchlist } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
@@ -152,6 +154,8 @@ function CoinDetailPage() {
             />
           </div>
 
+          <AdsterraBanner468x60 />
+
           <div className="mt-6 rounded-xl border border-border bg-card p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Links
@@ -168,6 +172,8 @@ function CoinDetailPage() {
               </p>
             ) : null}
           </div>
+
+          <AdsterraNativeBanner />
 
           <AlertList coinId={id} />
         </>
