@@ -1,7 +1,11 @@
 /**
- * Market data service (server-only).
- * Uses the public CoinGecko API and falls back to a generated mock dataset
- * when the upstream API is unavailable or rate-limited.
+ * Centralised CoinGecko market-data service (server-only).
+ *
+ * Rules:
+ *  - No mock / random / hardcoded prices. Ever.
+ *  - On upstream failure we serve the last known-good value and flag it stale.
+ *  - If nothing is known yet, callers get null/empty and the UI shows
+ *    "Data unavailable" instead of a fake zero.
  */
 
 export type Coin = {
@@ -12,7 +16,14 @@ export type Coin = {
   price: number;
   change24h: number;
   marketCap: number;
+  volume24h: number;
   image?: string | undefined;
+};
+
+export type CoinsPayload = {
+  coins: Coin[];
+  updatedAt: number;
+  stale: boolean;
 };
 
 export type CoinDetail = {
@@ -22,9 +33,15 @@ export type CoinDetail = {
   price: number;
   change24h: number;
   marketCap: number;
+  marketCapRank: number | null;
   volume24h: number;
-  supplyCirculating: number;
+  supplyCirculating: number | null;
+  supplyTotal: number | null;
   supplyMax: number | null;
+  ath: number | null;
+  athDate: string | null;
+  atl: number | null;
+  atlDate: string | null;
   image?: string | undefined;
   description?: string | undefined;
   homepage?: string | undefined;
@@ -32,6 +49,9 @@ export type CoinDetail = {
   twitter?: string | undefined;
   telegram?: string | undefined;
   historicalPrices: { timestamp: number; price: number }[];
+  updatedAt: number;
+  stale: boolean;
+  chartUnavailable: boolean;
 };
 
 export type NewsItem = {
@@ -41,223 +61,242 @@ export type NewsItem = {
   date: string;
 };
 
-const CG = "https://api.coingecko.com/api/v3";
+const CG_PUBLIC = "https://api.coingecko.com/api/v3";
+const CG_PRO = "https://pro-api.coingecko.com/api/v3";
 
-/** simple in-memory TTL cache so repeated visits don't re-hit the upstream API */
-const cache = new Map<string, { at: number; value: unknown }>();
-async function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): Promise<T> {
-  const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value as T;
-  const value = await load();
-  cache.set(key, { at: Date.now(), value });
-  return value;
+function cgConfig() {
+  const key = process.env["COINGECKO_API_KEY"];
+  const pro = process.env["COINGECKO_API_PLAN"] === "pro";
+  const headers: Record<string, string> = { accept: "application/json" };
+  if (key) headers[pro ? "x-cg-pro-api-key" : "x-cg-demo-api-key"] = key;
+  return { base: pro ? CG_PRO : CG_PUBLIC, headers };
 }
 
 async function cg<T>(path: string): Promise<T> {
-  const res = await fetch(`${CG}${path}`, {
-    headers: { accept: "application/json" },
-    signal: AbortSignal.timeout(8000),
+  const { base, headers } = cgConfig();
+  const res = await fetch(`${base}${path}`, {
+    headers,
+    signal: AbortSignal.timeout(10_000),
   });
+  if (res.status === 429) throw new Error("CoinGecko rate limit");
   if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
   return (await res.json()) as T;
 }
 
-/* ---------------- mock fallback ---------------- */
+/* ---------------- cache with stale fallback ---------------- */
 
-const SEED_COINS = [
-  { id: "bitcoin", name: "Bitcoin", symbol: "btc", base: 64000, cap: 1_250_000_000_000, supply: 19_700_000, max: 21_000_000 },
-  { id: "ethereum", name: "Ethereum", symbol: "eth", base: 3100, cap: 372_000_000_000, supply: 120_000_000, max: null },
-  { id: "tether", name: "Tether", symbol: "usdt", base: 1, cap: 112_000_000_000, supply: 112_000_000_000, max: null },
-  { id: "binancecoin", name: "BNB", symbol: "bnb", base: 580, cap: 85_000_000_000, supply: 147_000_000, max: 200_000_000 },
-  { id: "solana", name: "Solana", symbol: "sol", base: 145, cap: 67_000_000_000, supply: 462_000_000, max: null },
-  { id: "ripple", name: "XRP", symbol: "xrp", base: 0.52, cap: 29_000_000_000, supply: 55_000_000_000, max: 100_000_000_000 },
-  { id: "cardano", name: "Cardano", symbol: "ada", base: 0.41, cap: 14_500_000_000, supply: 35_000_000_000, max: 45_000_000_000 },
-  { id: "dogecoin", name: "Dogecoin", symbol: "doge", base: 0.12, cap: 17_000_000_000, supply: 143_000_000_000, max: null },
-  { id: "avalanche-2", name: "Avalanche", symbol: "avax", base: 27, cap: 10_800_000_000, supply: 400_000_000, max: 720_000_000 },
-  { id: "chainlink", name: "Chainlink", symbol: "link", base: 13.5, cap: 8_400_000_000, supply: 620_000_000, max: 1_000_000_000 },
-  { id: "polkadot", name: "Polkadot", symbol: "dot", base: 5.9, cap: 8_100_000_000, supply: 1_400_000_000, max: null },
-  { id: "litecoin", name: "Litecoin", symbol: "ltc", base: 72, cap: 5_400_000_000, supply: 74_000_000, max: 84_000_000 },
-];
+type Entry<T> = { at: number; value: T };
+const cache = new Map<string, Entry<unknown>>();
 
-/** deterministic-per-minute pseudo random so mock data "moves" like a market */
-function wobble(seed: string, salt = 0) {
-  const minute = Math.floor(Date.now() / 60000);
-  let h = 2166136261 ^ salt;
-  const s = seed + ":" + minute;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+/**
+ * Fresh within `ttlMs` → cached value. Otherwise refetch; on failure return the
+ * last good value marked stale. No value + failure → throws.
+ */
+async function cached<T>(
+  key: string,
+  ttlMs: number,
+  load: () => Promise<T>,
+): Promise<{ value: T; updatedAt: number; stale: boolean }> {
+  const hit = cache.get(key) as Entry<T> | undefined;
+  if (hit && Date.now() - hit.at < ttlMs) {
+    return { value: hit.value, updatedAt: hit.at, stale: false };
   }
-  return ((h >>> 0) % 10000) / 10000; // 0..1
+  try {
+    const value = await load();
+    const at = Date.now();
+    cache.set(key, { at, value });
+    return { value, updatedAt: at, stale: false };
+  } catch (err) {
+    if (hit) {
+      console.warn(`market: serving stale "${key}"`, (err as Error).message);
+      return { value: hit.value, updatedAt: hit.at, stale: true };
+    }
+    throw err;
+  }
 }
 
-function mockCoins(): Coin[] {
-  return SEED_COINS.map((c, i) => {
-    const drift = (wobble(c.id) - 0.5) * 0.06;
-    const change = (wobble(c.id, 7) - 0.45) * 12;
-    return {
-      id: c.id,
-      name: c.name,
-      symbol: c.symbol.toUpperCase(),
-      rank: i + 1,
-      price: +(c.base * (1 + drift)).toFixed(c.base < 1 ? 4 : 2),
-      change24h: +change.toFixed(2),
-      marketCap: Math.round(c.cap * (1 + drift)),
-    };
+/* ---------------- markets ---------------- */
+
+const PRICE_TTL = 30_000; // prices move fast, but respect rate limits
+const META_TTL = 10 * 60_000; // coin metadata is near-static
+const CHART_TTL: Record<string, number> = {
+  "1D": 5 * 60_000,
+  "7D": 15 * 60_000,
+  "30D": 30 * 60_000,
+  "90D": 60 * 60_000,
+  "1Y": 6 * 60 * 60_000,
+  MAX: 12 * 60 * 60_000,
+};
+
+export async function getCoins(): Promise<CoinsPayload> {
+  const { value, updatedAt, stale } = await cached<Coin[]>("coins", PRICE_TTL, async () => {
+    const data = await cg<any[]>(
+      "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h",
+    );
+    if (!Array.isArray(data) || data.length === 0) throw new Error("empty market response");
+    return data
+      .filter((c) => typeof c.current_price === "number" && c.current_price > 0)
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        symbol: String(c.symbol).toUpperCase(),
+        rank: c.market_cap_rank ?? 0,
+        price: c.current_price,
+        change24h: c.price_change_percentage_24h ?? 0,
+        marketCap: c.market_cap ?? 0,
+        volume24h: c.total_volume ?? 0,
+        image: c.image,
+      }));
   });
+  return { coins: value, updatedAt, stale };
 }
 
-function mockDetail(id: string): CoinDetail | null {
-  const seed = SEED_COINS.find((c) => c.id === id);
-  if (!seed) return null;
-  const coin = mockCoins().find((c) => c.id === id)!;
-  const points = 168;
-  const now = Math.floor(Date.now() / 1000);
-  const historicalPrices = Array.from({ length: points }, (_, i) => {
-    const t = now - (points - 1 - i) * 3600;
-    const w = wobble(`${id}:${i}`, 13) - 0.5;
-    const trend = Math.sin(i / 14) * 0.04;
-    return { timestamp: t, price: +(seed.base * (1 + trend + w * 0.03)).toFixed(seed.base < 1 ? 4 : 2) };
-  });
+const RANGE_DAYS: Record<string, string> = {
+  "1D": "1",
+  "7D": "7",
+  "30D": "30",
+  "90D": "90",
+  "1Y": "365",
+  MAX: "max",
+};
+
+export const CHART_RANGES = Object.keys(RANGE_DAYS);
+
+export async function getCoin(id: string, range = "7D"): Promise<CoinDetail | null> {
+  const days = RANGE_DAYS[range] ?? "7";
+
+  let info: { value: any; updatedAt: number; stale: boolean };
+  try {
+    info = await cached<any>(`coin:${id}`, PRICE_TTL, () =>
+      cg<any>(
+        `/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`,
+      ),
+    );
+  } catch {
+    return null;
+  }
+
+  let prices: { timestamp: number; price: number }[] = [];
+  let chartUnavailable = false;
+  try {
+    const chart = await cached<any>(
+      `chart:${id}:${range}`,
+      CHART_TTL[range] ?? 15 * 60_000,
+      () => cg<any>(`/coins/${id}/market_chart?vs_currency=usd&days=${days}`),
+    );
+    prices = (chart.value?.prices ?? []).map((p: [number, number]) => ({
+      timestamp: Math.floor(p[0] / 1000),
+      price: p[1],
+    }));
+    chartUnavailable = prices.length === 0;
+  } catch {
+    chartUnavailable = true;
+  }
+
+  const i = info.value;
+  const md = i.market_data ?? {};
+  const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
+
   return {
-    ...coin,
-    volume24h: Math.round(seed.cap * 0.05 * (0.6 + wobble(id, 3))),
-    supplyCirculating: seed.supply,
-    supplyMax: seed.max,
-    description: `${seed.name} (${seed.symbol.toUpperCase()}) market overview.`,
-    homepage: `https://www.coingecko.com/en/coins/${id}`,
-    sourceCode: "https://github.com",
-    twitter: `https://twitter.com/${seed.symbol}`,
-    telegram: "",
-    historicalPrices,
+    id: i.id,
+    name: i.name,
+    symbol: String(i.symbol).toUpperCase(),
+    price: md.current_price?.usd ?? 0,
+    change24h: md.price_change_percentage_24h ?? 0,
+    marketCap: md.market_cap?.usd ?? 0,
+    marketCapRank: num(i.market_cap_rank),
+    volume24h: md.total_volume?.usd ?? 0,
+    supplyCirculating: num(md.circulating_supply),
+    supplyTotal: num(md.total_supply),
+    supplyMax: num(md.max_supply),
+    ath: num(md.ath?.usd),
+    athDate: md.ath_date?.usd ?? null,
+    atl: num(md.atl?.usd),
+    atlDate: md.atl_date?.usd ?? null,
+    image: i.image?.large,
+    description: (i.description?.en ?? "").split(". ")[0] || undefined,
+    homepage: i.links?.homepage?.[0] || undefined,
+    sourceCode: i.links?.repos_url?.github?.[0] || undefined,
+    twitter: i.links?.twitter_screen_name
+      ? `https://twitter.com/${i.links.twitter_screen_name}`
+      : undefined,
+    telegram: i.links?.telegram_channel_identifier
+      ? `https://t.me/${i.links.telegram_channel_identifier}`
+      : undefined,
+    historicalPrices: prices,
+    updatedAt: info.updatedAt,
+    stale: info.stale,
+    chartUnavailable,
   };
 }
 
-/* ---------------- public service API ---------------- */
-
-export async function getCoins(): Promise<Coin[]> {
-  return cached("coins", 20_000, async () => {
-  try {
-    const data = await cg<any[]>(
-      "/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false",
-    );
-    if (!Array.isArray(data) || data.length === 0) throw new Error("empty");
-    return data.map((c) => ({
-      id: c.id,
-      name: c.name,
-      symbol: String(c.symbol).toUpperCase(),
-      rank: c.market_cap_rank ?? 0,
-      price: c.current_price ?? 0,
-      change24h: c.price_change_percentage_24h ?? 0,
-      marketCap: c.market_cap ?? 0,
-      image: c.image,
-    }));
-  } catch {
-    return mockCoins();
-  }
-  });
-}
-
-const RANGE_DAYS: Record<string, string> = { "1D": "1", "7D": "7", "1M": "30", "1Y": "365" };
-
-export async function getCoin(id: string, range = "7D"): Promise<CoinDetail | null> {
-  return cached(`coin:${id}:${range}`, 45_000, async () => {
-  const days = RANGE_DAYS[range] ?? "7";
-  try {
-    const [info, chart] = await Promise.all([
-      cg<any>(`/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`),
-      cg<any>(`/coins/${id}/market_chart?vs_currency=usd&days=${days}`),
-    ]);
-    const md = info.market_data ?? {};
-    return {
-      id: info.id,
-      name: info.name,
-      symbol: String(info.symbol).toUpperCase(),
-      price: md.current_price?.usd ?? 0,
-      change24h: md.price_change_percentage_24h ?? 0,
-      marketCap: md.market_cap?.usd ?? 0,
-      volume24h: md.total_volume?.usd ?? 0,
-      supplyCirculating: md.circulating_supply ?? 0,
-      supplyMax: md.max_supply ?? null,
-      image: info.image?.large,
-      description: (info.description?.en ?? "").split(". ")[0],
-      homepage: info.links?.homepage?.[0] || undefined,
-      sourceCode: info.links?.repos_url?.github?.[0] || undefined,
-      twitter: info.links?.twitter_screen_name
-        ? `https://twitter.com/${info.links.twitter_screen_name}`
-        : undefined,
-      telegram: info.links?.telegram_channel_identifier
-        ? `https://t.me/${info.links.telegram_channel_identifier}`
-        : undefined,
-      historicalPrices: (chart.prices ?? []).map((p: [number, number]) => ({
-        timestamp: Math.floor(p[0] / 1000),
-        price: p[1],
-      })),
-    };
-  } catch {
-    const m = mockDetail(id);
-    if (!m) return null;
-    const slice = { "1D": 24, "7D": 168, "1M": 168, "1Y": 168 }[range] ?? 168;
-    return { ...m, historicalPrices: m.historicalPrices.slice(-slice) };
-  }
-  });
+/** Coin metadata search (long cache — static data). */
+export async function searchCoins(query: string) {
+  const key = `search:${query.toLowerCase()}`;
+  const { value } = await cached<any>(key, META_TTL, () =>
+    cg<any>(`/search?query=${encodeURIComponent(query)}`),
+  );
+  return (value?.coins ?? []).slice(0, 15).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    symbol: String(c.symbol).toUpperCase(),
+    rank: c.market_cap_rank ?? 0,
+    image: c.thumb,
+  }));
 }
 
 export async function getNews(): Promise<NewsItem[]> {
-  return cached("news", 300_000, async () => {
-  try {
+  const { value } = await cached<NewsItem[]>("news", 5 * 60_000, async () => {
     const res = await fetch("https://min-api.cryptocompare.com/data/v2/news/?lang=EN", {
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) throw new Error("news");
+    if (!res.ok) throw new Error(`news ${res.status}`);
     const json = (await res.json()) as any;
     const items = json?.Data ?? [];
-    if (!items.length) throw new Error("empty");
+    if (!items.length) throw new Error("empty news response");
     return items.slice(0, 30).map((n: any) => ({
       title: n.title,
       source: n.source_info?.name ?? n.source ?? "Crypto",
       url: n.url,
       date: new Date(n.published_on * 1000).toISOString(),
     }));
-  } catch {
-    const now = Date.now();
-    return [
-      { title: "Bitcoin ETF inflows hit a new weekly record", source: "CoinDesk" },
-      { title: "Ethereum developers finalize next upgrade scope", source: "The Block" },
-      { title: "Altcoin rally continues as liquidity returns", source: "CoinTelegraph" },
-      { title: "Stablecoin supply grows for the sixth straight week", source: "Decrypt" },
-      { title: "Layer-2 fees drop to multi-month lows", source: "CoinDesk" },
-      { title: "Regulators publish updated digital asset guidance", source: "Reuters" },
-    ].map((n, i) => ({
-      ...n,
-      url: `https://www.coindesk.com/`,
-      date: new Date(now - i * 3600_000 * 3).toISOString(),
-    }));
-  }
   });
+  return value;
 }
 
-/** Current USD price for a set of coin ids (used by the alert checker). */
+/**
+ * Current USD price for a set of coin ids (alert engine, portfolio, wallet).
+ * Missing ids are simply absent from the result — never zero.
+ */
 export async function getPrices(ids: string[]): Promise<Record<string, number>> {
   if (!ids.length) return {};
   const result: Record<string, number> = {};
   try {
-    const data = await cg<Record<string, { usd?: number }>>(
-      `/simple/price?ids=${encodeURIComponent(ids.join(","))}&vs_currencies=usd`,
+    const { value } = await cached<Record<string, { usd?: number }>>(
+      `prices:${[...ids].sort().join(",")}`,
+      PRICE_TTL,
+      () =>
+        cg<Record<string, { usd?: number }>>(
+          `/simple/price?ids=${encodeURIComponent(ids.join(","))}&vs_currencies=usd`,
+        ),
     );
     for (const id of ids) {
-      const price = data?.[id]?.usd;
+      const price = value?.[id]?.usd;
       if (typeof price === "number" && price > 0) result[id] = price;
     }
   } catch {
-    /* fall through to the market list below */
+    /* fall through to the cached market list */
   }
   const missing = ids.filter((id) => !result[id]);
   if (missing.length) {
-    const coins = await getCoins();
-    for (const id of missing) {
-      const hit = coins.find((c) => c.id === id);
-      if (hit && hit.price > 0) result[id] = hit.price;
+    try {
+      const { coins } = await getCoins();
+      for (const id of missing) {
+        const hit = coins.find((c) => c.id === id);
+        if (hit && hit.price > 0) result[id] = hit.price;
+      }
+    } catch {
+      /* leave missing ids out entirely */
     }
   }
   return result;
