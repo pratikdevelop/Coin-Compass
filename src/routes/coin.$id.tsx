@@ -214,11 +214,20 @@ function CoinDetailPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string | undefined;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="numeric mt-1 text-base">{value}</div>
+      {sub ? <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div> : null}
     </div>
   );
 }
