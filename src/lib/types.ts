@@ -6,7 +6,14 @@ export type Coin = {
   price: number;
   change24h: number;
   marketCap: number;
+  volume24h: number;
   image?: string;
+};
+
+export type CoinsPayload = {
+  coins: Coin[];
+  updatedAt: number;
+  stale: boolean;
 };
 
 export type CoinDetail = {
@@ -16,9 +23,15 @@ export type CoinDetail = {
   price: number;
   change24h: number;
   marketCap: number;
+  marketCapRank: number | null;
   volume24h: number;
-  supplyCirculating: number;
+  supplyCirculating: number | null;
+  supplyTotal: number | null;
   supplyMax: number | null;
+  ath: number | null;
+  athDate: string | null;
+  atl: number | null;
+  atlDate: string | null;
   image?: string;
   description?: string;
   homepage?: string;
@@ -26,6 +39,9 @@ export type CoinDetail = {
   twitter?: string;
   telegram?: string;
   historicalPrices: { timestamp: number; price: number }[];
+  updatedAt: number;
+  stale: boolean;
+  chartUnavailable: boolean;
 };
 
 export type NewsItem = {
@@ -33,21 +49,4 @@ export type NewsItem = {
   source: string;
   url: string;
   date: string;
-};
-
-export type Alert = {
-  id: string;
-  coinId: string;
-  symbol: string;
-  direction: "above" | "below";
-  price: number;
-  createdAt: number;
-};
-
-export type Holding = {
-  coinId: string;
-  symbol: string;
-  name: string;
-  quantity: number;
-  buyPrice: number;
 };

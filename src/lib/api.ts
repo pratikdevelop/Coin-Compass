@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { Coin, CoinDetail, NewsItem } from "./types";
+import type { Coin, CoinDetail, CoinsPayload, NewsItem } from "./types";
 
 async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -7,19 +7,30 @@ async function getJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-export const coinsQuery = queryOptions({
+/**
+ * Single shared market feed. Every surface (markets table, ticker, watchlist,
+ * portfolio, search) reads from this one cache entry so we never hammer
+ * CoinGecko with duplicate requests.
+ */
+export const marketQuery = queryOptions({
   queryKey: ["coins"],
-  queryFn: () => getJson<Coin[]>("/api/coins"),
-  refetchInterval: 60_000,
-  staleTime: 30_000,
+  queryFn: () => getJson<CoinsPayload>("/api/coins"),
+  refetchInterval: 30_000,
+  staleTime: 15_000,
+  // keep the last good payload on screen if a refresh fails
+  retry: 2,
 });
 
-/** Fast-refreshing feed for the home page live ticker. */
+export const coinsQuery = queryOptions({
+  ...marketQuery,
+  select: (p: CoinsPayload): Coin[] => p.coins,
+});
+
+/** Ticker shares the same cache entry, just observes it more eagerly. */
 export const tickerQuery = queryOptions({
-  queryKey: ["ticker"],
-  queryFn: () => getJson<Coin[]>("/api/coins"),
-  refetchInterval: 5_000,
-  staleTime: 0,
+  ...marketQuery,
+  refetchInterval: 15_000,
+  select: (p: CoinsPayload): Coin[] => p.coins,
 });
 
 export const coinQuery = (id: string, range: string) =>
