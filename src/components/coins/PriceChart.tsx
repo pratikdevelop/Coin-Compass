@@ -10,8 +10,8 @@ import {
 } from "recharts";
 import { formatPrice } from "@/lib/format";
 
-export type Range = "1D" | "7D" | "1M" | "1Y";
-export const RANGES: Range[] = ["1D", "7D", "1M", "1Y"];
+export type Range = "1D" | "7D" | "30D" | "90D" | "1Y" | "MAX";
+export const RANGES: Range[] = ["1D", "7D", "30D", "90D", "1Y", "MAX"];
 
 export function PriceChart({
   points,
@@ -36,7 +36,8 @@ export function PriceChart({
   function labelFor(t: number) {
     const d = new Date(t);
     if (range === "1D") return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    if (range === "1Y") return d.toLocaleDateString([], { month: "short", year: "2-digit" });
+    if (range === "1Y" || range === "MAX")
+      return d.toLocaleDateString([], { month: "short", year: "2-digit" });
     return d.toLocaleDateString([], { month: "short", day: "numeric" });
   }
 

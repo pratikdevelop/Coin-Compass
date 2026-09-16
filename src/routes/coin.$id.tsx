@@ -137,22 +137,54 @@ function CoinDetailPage() {
                 </button>
               ))}
             </div>
-            <PriceChart points={data.historicalPrices} range={range} positive={data.change24h >= 0} />
+            {data.chartUnavailable ? (
+              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground sm:h-[380px]">
+                Chart data unavailable for this range right now.
+              </div>
+            ) : (
+              <PriceChart
+                points={data.historicalPrices}
+                range={range}
+                positive={data.change24h >= 0}
+              />
+            )}
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Stat label="Current price" value={formatPrice(data.price)} />
+            <Stat label="Market rank" value={data.marketCapRank ? `#${data.marketCapRank}` : "—"} />
             <Stat label="Market cap" value={formatCompact(data.marketCap)} />
             <Stat label="24h volume" value={formatCompact(data.volume24h)} />
             <Stat
               label="Circulating supply"
-              value={`${formatNumber(data.supplyCirculating)} ${data.symbol}`}
+              value={
+                data.supplyCirculating !== null
+                  ? `${formatNumber(data.supplyCirculating)} ${data.symbol}`
+                  : "Data unavailable"
+              }
             />
             <Stat
               label="Max supply"
               value={data.supplyMax ? `${formatNumber(data.supplyMax)} ${data.symbol}` : "Unlimited"}
             />
+            <Stat
+              label="All-time high"
+              value={data.ath !== null ? formatPrice(data.ath) : "Data unavailable"}
+              sub={data.athDate ? new Date(data.athDate).toLocaleDateString() : undefined}
+            />
+            <Stat
+              label="All-time low"
+              value={data.atl !== null ? formatPrice(data.atl) : "Data unavailable"}
+              sub={data.atlDate ? new Date(data.atlDate).toLocaleDateString() : undefined}
+            />
           </div>
+
+          {data.stale ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Live feed is temporarily unreachable — showing the last confirmed data from{" "}
+              {new Date(data.updatedAt).toLocaleTimeString()}.
+            </p>
+          ) : null}
 
           <AdsterraBanner468x60 />
 
@@ -182,11 +214,20 @@ function CoinDetailPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: string;
+  sub?: string | undefined;
+}) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="numeric mt-1 text-base">{value}</div>
+      {sub ? <div className="mt-0.5 text-xs text-muted-foreground">{sub}</div> : null}
     </div>
   );
 }
