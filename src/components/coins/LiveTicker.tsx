@@ -40,6 +40,9 @@ export function LiveTicker() {
           params={{ id: c.id }}
           className="flex items-center gap-2 text-sm transition-opacity hover:opacity-80"
         >
+          {c.image ? (
+            <img src={c.image} alt="" className="size-4 rounded-full" loading="lazy" />
+          ) : null}
           <span className="font-medium">{c.symbol}</span>
           <span
             className={cn(

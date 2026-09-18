@@ -5,7 +5,7 @@ import type { Coin } from "@/lib/types";
 import { formatCompact, formatPercent, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type SortKey = "rank" | "name" | "price" | "change24h" | "marketCap";
+type SortKey = "rank" | "name" | "price" | "change24h" | "marketCap" | "volume24h";
 
 export function CoinTable({
   coins,
@@ -66,7 +66,7 @@ export function CoinTable({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card">
-      <table className="w-full min-w-[680px] border-collapse text-sm">
+      <table className="w-full min-w-[780px] border-collapse text-sm">
         <thead className="border-b border-border">
           <tr className="text-left">
             <th className="w-10 px-3 py-3" />
@@ -75,6 +75,7 @@ export function CoinTable({
             {header("price", "Price", "text-right [&>button]:w-full [&>button]:text-right")}
             {header("change24h", "24h %", "text-right [&>button]:w-full [&>button]:text-right")}
             {header("marketCap", "Market Cap", "text-right [&>button]:w-full [&>button]:text-right")}
+            {header("volume24h", "24h Volume", "text-right [&>button]:w-full [&>button]:text-right")}
           </tr>
         </thead>
         <tbody>
@@ -115,6 +116,9 @@ export function CoinTable({
                 </td>
                 <td className="numeric px-3 py-3 text-right text-muted-foreground">
                   {formatCompact(coin.marketCap)}
+                </td>
+                <td className="numeric px-3 py-3 text-right text-muted-foreground">
+                  {formatCompact(coin.volume24h)}
                 </td>
               </tr>
             );

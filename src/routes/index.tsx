@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
-import { coinsQuery } from "@/lib/api";
+import { coinsQuery, marketQuery } from "@/lib/api";
 import { toast } from "sonner";
 import { useWatchlist } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/")({
 
 function MarketsPage() {
   const { data, isLoading, isError, dataUpdatedAt } = useQuery(coinsQuery);
+  const { data: payload } = useQuery(marketQuery);
   const { ids: watchlist, toggle } = useWatchlist();
   const { userId } = useAuth();
 
@@ -76,7 +77,7 @@ function MarketsPage() {
       <section className="glow-surface -mx-4 mb-8 px-4 pb-8 pt-10 sm:-mx-6 sm:px-6">
         <h1 className="text-3xl font-semibold sm:text-4xl">Today's crypto markets</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Prices refresh automatically every minute. Star any coin to track it on your watchlist.
+          Prices refresh automatically from CoinGecko. Star any coin to track it on your watchlist.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-6 text-sm">
           <div>
@@ -90,8 +91,15 @@ function MarketsPage() {
           <div>
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Last update</div>
             <div className="numeric text-lg">
-              {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "—"}
+              {payload?.updatedAt
+                ? new Date(payload.updatedAt).toLocaleTimeString()
+                : dataUpdatedAt
+                  ? new Date(dataUpdatedAt).toLocaleTimeString()
+                  : "—"}
             </div>
+            {payload?.stale ? (
+              <div className="text-xs text-amber-500">Live feed unreachable — data may be stale</div>
+            ) : null}
           </div>
         </div>
       </section>

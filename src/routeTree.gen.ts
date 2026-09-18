@@ -10,13 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdsRouteImport } from './routes/ads'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as TradesRouteImport } from './routes/trades'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as ApiCoinsRouteImport } from './routes/api/coins'
 import { Route as ApiNewsRouteImport } from './routes/api/news'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as CoinIdRouteImport } from './routes/coin.$id'
 import { Route as ApiCoinIdRouteImport } from './routes/api/coin.$id'
 import { Route as ApiPublicHooksCheckAlertsRouteImport } from './routes/api/public/hooks/check-alerts'
@@ -26,9 +29,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdsRoute = AdsRouteImport.update({
+  id: '/ads',
+  path: '/ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewsRoute = NewsRouteImport.update({
@@ -61,6 +74,11 @@ const ApiNewsRoute = ApiNewsRouteImport.update({
   path: '/api/news',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
 const CoinIdRoute = CoinIdRouteImport.update({
   id: '/coin/$id',
   path: '/coin/$id',
@@ -80,26 +98,32 @@ const ApiPublicHooksCheckAlertsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ads': typeof AdsRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
   '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/coin/$id': typeof CoinIdRoute
   '/api/coin/$id': typeof ApiCoinIdRoute
   '/api/public/hooks/check-alerts': typeof ApiPublicHooksCheckAlertsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ads': typeof AdsRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
   '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/coin/$id': typeof CoinIdRoute
   '/api/coin/$id': typeof ApiCoinIdRoute
   '/api/public/hooks/check-alerts': typeof ApiPublicHooksCheckAlertsRoute
@@ -107,13 +131,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ads': typeof AdsRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRouteWithChildren
   '/news': typeof NewsRoute
   '/portfolio': typeof PortfolioRoute
   '/trades': typeof TradesRoute
   '/watchlist': typeof WatchlistRoute
   '/api/coins': typeof ApiCoinsRoute
   '/api/news': typeof ApiNewsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/coin/$id': typeof CoinIdRoute
   '/api/coin/$id': typeof ApiCoinIdRoute
   '/api/public/hooks/check-alerts': typeof ApiPublicHooksCheckAlertsRoute
@@ -122,39 +149,48 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/ads'
     | '/auth'
+    | '/blog'
     | '/news'
     | '/portfolio'
     | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
+    | '/blog/$slug'
     | '/coin/$id'
     | '/api/coin/$id'
     | '/api/public/hooks/check-alerts'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ads'
     | '/auth'
+    | '/blog'
     | '/news'
     | '/portfolio'
     | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
+    | '/blog/$slug'
     | '/coin/$id'
     | '/api/coin/$id'
     | '/api/public/hooks/check-alerts'
   id:
     | '__root__'
     | '/'
+    | '/ads'
     | '/auth'
+    | '/blog'
     | '/news'
     | '/portfolio'
     | '/trades'
     | '/watchlist'
     | '/api/coins'
     | '/api/news'
+    | '/blog/$slug'
     | '/coin/$id'
     | '/api/coin/$id'
     | '/api/public/hooks/check-alerts'
@@ -162,7 +198,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdsRoute: typeof AdsRoute
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRouteWithChildren
   NewsRoute: typeof NewsRoute
   PortfolioRoute: typeof PortfolioRoute
   TradesRoute: typeof TradesRoute
@@ -183,11 +221,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ads': {
+      id: '/ads'
+      path: '/ads'
+      fullPath: '/ads'
+      preLoaderRoute: typeof AdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/news': {
@@ -232,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/coin/$id': {
       id: '/coin/$id'
       path: '/coin/$id'
@@ -256,9 +315,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdsRoute: AdsRoute,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRouteWithChildren,
   NewsRoute: NewsRoute,
   PortfolioRoute: PortfolioRoute,
   TradesRoute: TradesRoute,
