@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          page: string
+          slot: string
+          unit: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          page: string
+          slot: string
+          unit: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          page?: string
+          slot?: string
+          unit?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          excerpt: string | null
+          id: string
+          published: boolean
+          published_at: string
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published?: boolean
+          published_at?: string
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published?: boolean
+          published_at?: string
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       holdings: {
         Row: {
           buy_price: number
@@ -53,6 +122,7 @@ export type Database = {
       price_alerts: {
         Row: {
           active: boolean
+          alert_type: string
           coin_id: string
           created_at: string
           direction: string
@@ -60,6 +130,7 @@ export type Database = {
           id: string
           name: string
           symbol: string
+          target_percentage: number | null
           target_price: number
           triggered_at: string | null
           updated_at: string
@@ -67,6 +138,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          alert_type?: string
           coin_id: string
           created_at?: string
           direction: string
@@ -74,6 +146,7 @@ export type Database = {
           id?: string
           name?: string
           symbol: string
+          target_percentage?: number | null
           target_price: number
           triggered_at?: string | null
           updated_at?: string
@@ -81,6 +154,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          alert_type?: string
           coin_id?: string
           created_at?: string
           direction?: string
@@ -88,6 +162,7 @@ export type Database = {
           id?: string
           name?: string
           symbol?: string
+          target_percentage?: number | null
           target_price?: number
           triggered_at?: string | null
           updated_at?: string
@@ -160,6 +235,63 @@ export type Database = {
           symbol?: string
           traded_at?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_accounts: {
+        Row: {
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
