@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AdContainer, AdPlaceholder } from "./AdContainer";
+import { trackAdEvent } from "@/lib/ad-analytics";
 
 const KEY = "b9ba65c48ae24da0a38901875fde6f1e";
 
@@ -15,7 +16,13 @@ const DOC = `<!doctype html><html><head><meta charset="utf-8">
 <script src="https://beavercolourfuldelinquent.com/${KEY}/invoke.js"><\/script>
 </body></html>`;
 
-export function AdsterraBanner468x60({ className }: { className?: string | undefined }) {
+export function AdsterraBanner468x60({
+  className,
+  slot = "banner-468x60",
+}: {
+  className?: string | undefined;
+  slot?: string;
+}) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -26,7 +33,7 @@ export function AdsterraBanner468x60({ className }: { className?: string | undef
   }, []);
 
   return (
-    <AdContainer className={className}>
+    <AdContainer className={className} unit="banner-468x60" slot={slot}>
       {!loaded ? <AdPlaceholder height={60} /> : null}
       {/* Horizontal scrolling stays inside this box, never on the page. */}
       <div className="mx-auto w-full max-w-full overflow-x-auto">
@@ -36,7 +43,10 @@ export function AdsterraBanner468x60({ className }: { className?: string | undef
           width={468}
           height={60}
           scrolling="no"
-          onLoad={() => setLoaded(true)}
+          onLoad={() => {
+            setLoaded(true);
+            trackAdEvent("banner-468x60", slot, "loaded");
+          }}
           sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin"
           className="mx-auto block border-0"
           style={{ width: 468, height: 60, display: loaded ? "block" : "none" }}
